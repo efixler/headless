@@ -23,3 +23,4 @@ https://hub.docker.com/r/justinribeiro/chrome-headless/
 ## DevTools Adaptor Libraries
 
 - https://github.com/go-rod/rod
+- https://github.com/chromedp/chromedp
