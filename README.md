@@ -1,6 +1,17 @@
 # headless
 
-## Chrome Headless Builds
+## Execution plan
+
+### Go is the controller
+
+Go will launch a local headless chrome, since remote debugging seems janky. Start this as a script and then port it to a server
+
+In either case the Go process launches and then launches the browser
+
+## Chrome Headless Launcher
+
+-- Set a smallish viewport, user agent and such
+
 
 ### yukinying
 
