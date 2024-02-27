@@ -25,7 +25,6 @@ func (b *Browser) HTMLContent(url string) (string, error) {
 	var htmlContent string
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
-		// chromedp.WaitVisible("body"),
 		chromedp.WaitReady("body"),
 		chromedp.Sleep(2*time.Second),
 		chromedp.OuterHTML("html", &htmlContent),
@@ -37,13 +36,14 @@ func (b *Browser) HTMLContent(url string) (string, error) {
 
 func getAllocatorOptions() []chromedp.ExecAllocatorOption {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-dev-shm-usage", true),
 		chromedp.Flag("mute-audio", true),
 		//chromedp.Flag("remote-debugging-address", "127.0.0.1"),
 		//chromedp.Flag("remote-debugging-port", fmt.Sprintf("%d", 9222)),
-		chromedp.WindowSize(1920, 1080),
+		// chromedp.WindowSize(1920, 1080),
+		chromedp.WindowSize(1366, 768),
 	)
 
 	return opts
