@@ -2,21 +2,24 @@ package browser
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/efixler/headless/ua"
 )
 
 type Browser struct {
-	ctx    context.Context
-	Cancel context.CancelFunc
+	ctx     context.Context
+	Cancel  context.CancelFunc
+	timeout time.Duration
 }
 
 func NewBrowser(ctx context.Context) *Browser {
 	allocCtx, cancel := chromedp.NewExecAllocator(ctx, getAllocatorOptions()...)
 
-	return &Browser{ctx: allocCtx, Cancel: cancel}
+	return &Browser{ctx: allocCtx, Cancel: cancel, timeout: 30 * time.Second}
 }
 
 func (b *Browser) HTMLContent(url string) (string, error) {
@@ -24,8 +27,19 @@ func (b *Browser) HTMLContent(url string) (string, error) {
 	defer cancel()
 
 	var htmlContent string
+	var statusCode int
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			chromedp.ListenTarget(ctx, func(ev interface{}) {
+				switch ev := ev.(type) {
+				case *network.EventResponseReceived:
+					statusCode = int(ev.Response.Status)
+					slog.Info("Received response", "status", statusCode)
+				}
+			})
+			return nil
+		}),
 		chromedp.WaitReady("body"),
 		chromedp.Sleep(2*time.Second),
 		chromedp.OuterHTML("html", &htmlContent),
