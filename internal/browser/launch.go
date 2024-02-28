@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/efixler/headless/ua"
 )
 
 type Browser struct {
@@ -36,13 +37,20 @@ func (b *Browser) HTMLContent(url string) (string, error) {
 
 func getAllocatorOptions() []chromedp.ExecAllocatorOption {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),
-		chromedp.Flag("disable-gpu", true),
+		// chromedp.Flag("headless", true),
+		// chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-dev-shm-usage", true),
-		chromedp.Flag("mute-audio", true),
-		//chromedp.Flag("remote-debugging-address", "127.0.0.1"),
-		//chromedp.Flag("remote-debugging-port", fmt.Sprintf("%d", 9222)),
+		// chromedp.Flag("mute-audio", true), // included in Headless
+		// chromedp.Flag("remote-debugging-address", "127.0.0.1"),
+		// chromedp.Flag("remote-debugging-port", fmt.Sprintf("%d", 9222)),
 		// chromedp.WindowSize(1920, 1080),
+		// chromedp.DisableGPU, // supposedly unnecessary
+		chromedp.Headless,
+		// chromedp.NoSandbox, TODO: Figure out what is better here in headless mode
+		chromedp.UserAgent(ua.Firefox88),
+		chromedp.NoFirstRun,
+		chromedp.NoDefaultBrowserCheck,
+		// chromedp.IgnoreCertErrors, // check this when using proxies
 		chromedp.WindowSize(1366, 768),
 	)
 
