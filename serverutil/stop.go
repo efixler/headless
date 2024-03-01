@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+func WaitForShutdown(s *http.Server, cf context.CancelFunc) {
+	WaitForKill()
+	<-ShutdownServer(s, cf)
+}
+
 func WaitForKill() {
 	kill := make(chan os.Signal, 1)
 	signal.Notify(kill, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

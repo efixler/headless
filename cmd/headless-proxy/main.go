@@ -34,8 +34,7 @@ func main() {
 		}
 	}()
 
-	serverutil.WaitForKill()
-	<-serverutil.ShutdownServer(server, cancel)
+	serverutil.WaitForShutdown(server, cancel)
 	if logFile, ok := (logWriter).(*os.File); ok {
 		logFile.Sync()
 	}
