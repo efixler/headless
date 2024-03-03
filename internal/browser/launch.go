@@ -3,6 +3,7 @@ package browser
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/chromedp/cdproto/network"
@@ -10,19 +11,18 @@ import (
 	"github.com/efixler/headless/ua"
 )
 
-type Browser struct {
+type Chrome struct {
 	ctx     context.Context
 	Cancel  context.CancelFunc
 	timeout time.Duration
 }
 
-func NewBrowser(ctx context.Context) *Browser {
+func NewChrome(ctx context.Context) *Chrome {
 	allocCtx, cancel := chromedp.NewExecAllocator(ctx, getAllocatorOptions()...)
-
-	return &Browser{ctx: allocCtx, Cancel: cancel, timeout: 30 * time.Second}
+	return &Chrome{ctx: allocCtx, Cancel: cancel, timeout: 30 * time.Second}
 }
 
-func (b *Browser) HTMLContent(url string) (string, error) {
+func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
 	ctx, cancel := chromedp.NewContext(b.ctx)
 	defer cancel()
 

@@ -27,11 +27,11 @@ func main() {
 	}
 	url := flags.Args()[0]
 
-	b := browser.NewBrowser(context.Background())
+	b := browser.NewChrome(context.Background())
 	defer b.Cancel()
 
 	// content, err := GetHtmlContent(url)
-	content, err := b.HTMLContent(url)
+	content, err := b.HTMLContent(url, nil)
 	if err != nil {
 		slog.Error("Error getting HTML content", "url", url, "err", err)
 		os.Exit(1)

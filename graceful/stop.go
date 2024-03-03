@@ -1,4 +1,4 @@
-package serverutil
+package graceful
 
 import (
 	"context"
@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// After a SIGINT, SIGTERM, or os.Interrupt, shut down s, wait a bit for
+// requests to clear, then call the passed cancel function.
+// This function will block until server shutdown is complete
 func WaitForShutdown(s *http.Server, cf context.CancelFunc) {
 	WaitForKill()
 	<-ShutdownServer(s, cf)
@@ -21,10 +24,9 @@ func WaitForKill() {
 	<-kill
 }
 
-// Shutdown the server and then progate the shutdown to the mux
-// This will let the requests finish before shutting down the db
-// cf is the cancel function for the mux context, or, generically
-// speaking, a cancel function to queue up after the server is done
+// Shutdown the server and then progate the shutdown to a cancel function.
+// This will let the requests finish before shutting down any other resources
+// with the passed CancelFunc.
 // Caller should block on the returned channel.
 func ShutdownServer(s *http.Server, cf context.CancelFunc) chan bool {
 	slog.Info("server shutting down")

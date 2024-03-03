@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/efixler/envflags"
-	"github.com/efixler/headless/serverutil"
+	"github.com/efixler/headless/graceful"
+	"github.com/efixler/headless/internal/browser"
+	"github.com/efixler/headless/internal/proxy"
 )
 
 var (
@@ -22,11 +24,14 @@ var (
 
 func main() {
 	slog.Info("Starting headless-proxy server", "addr", server.Addr)
-	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
-	})
+	ctx, cancel := context.WithCancel(context.Background())
 
-	_, cancel := context.WithCancel(context.Background())
+	c := browser.NewChrome(ctx)
+	var err error
+	if server.Handler, err = proxy.New(c); err != nil {
+		slog.Error("can't initialize proxy", "err", err)
+		os.Exit(1)
+	}
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -34,7 +39,7 @@ func main() {
 		}
 	}()
 
-	serverutil.WaitForShutdown(server, cancel)
+	graceful.WaitForShutdown(server, cancel)
 	if logFile, ok := (logWriter).(*os.File); ok {
 		logFile.Sync()
 	}
