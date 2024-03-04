@@ -10,6 +10,10 @@ type Browser interface {
 	HTMLContent(url string, headers http.Header) (string, error)
 }
 
+type TabFactory interface {
+	AcquireTab() (Browser, error)
+}
+
 type HTTPError struct {
 	StatusCode int
 	Status     string

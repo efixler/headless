@@ -26,6 +26,14 @@ func New(b headless.Browser) (http.HandlerFunc, error) {
 				headers.Set(headerName, hval)
 			}
 		}
+		var err error
+		if tf, ok := b.(headless.TabFactory); ok {
+			b, err = tf.AcquireTab()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusServiceUnavailable)
+				return
+			}
+		}
 
 		content, err := b.HTMLContent(req.URL.String(), headers)
 		if err != nil {

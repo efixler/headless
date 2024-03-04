@@ -15,6 +15,7 @@ import (
 var (
 	flags        = flag.NewFlagSet("headless", flag.ExitOnError)
 	browserFlags *cmd.HeadlessBrowserSpec
+	headless     bool
 )
 
 func main() {
@@ -27,11 +28,19 @@ func main() {
 	}
 	url := flags.Args()[0]
 
-	b := browser.NewChrome(context.Background())
+	b := browser.NewChrome(
+		context.Background(),
+		browser.Headless(headless),
+		browser.MaxTabs(1),
+	)
 	defer b.Cancel()
+	tab, err := b.AcquireTab()
+	if err != nil {
+		slog.Error("Error acquiring tab", "err", err)
+		os.Exit(1)
+	}
 
-	// content, err := GetHtmlContent(url)
-	content, err := b.HTMLContent(url, nil)
+	content, err := tab.HTMLContent(url, nil)
 	if err != nil {
 		slog.Error("Error getting HTML content", "url", url, "err", err)
 		os.Exit(1)
@@ -44,9 +53,12 @@ func init() {
 	browserFlags = cmd.HeadlessBrowserFlags(flags)
 	logLevelFlag := envflags.NewLogLevel("LOG_LEVEL", slog.LevelInfo)
 	logLevelFlag.AddTo(flags, "log-level", "Log level")
+	noHeadlessFlag := envflags.NewBool("NO_HEADLESS", false)
+	noHeadlessFlag.AddTo(flags, "H", "Don't run headless mode")
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 	slog.SetLogLoggerLevel(logLevelFlag.Get())
+	headless = !noHeadlessFlag.Get()
 }
 
 func usage() {
