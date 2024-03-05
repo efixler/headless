@@ -92,9 +92,6 @@ func (b *Chrome) applyOptions(opts []option) error {
 		chromedp.UserAgent(b.config.userAgent),
 		chromedp.WindowSize(b.config.windowSize[0], b.config.windowSize[1]),
 	)
-	if b.config.userAgent == "" {
-		c.allocatorOptions = append(c.allocatorOptions, chromedp.UserAgent(b.config.userAgent))
-	}
 
 	return nil
 }
