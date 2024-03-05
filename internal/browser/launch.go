@@ -97,26 +97,3 @@ func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
 
 	return html, err
 }
-
-// func getAllocatorOptions() []chromedp.ExecAllocatorOption {
-// 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-// 		// chromedp.Flag("headless", false),
-// 		// chromedp.Flag("disable-gpu", true),
-// 		chromedp.Flag("disable-dev-shm-usage", true),
-// 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-// 		// chromedp.Flag("mute-audio", true), // included in Headless
-// 		// chromedp.Flag("remote-debugging-address", "127.0.0.1"),
-// 		// chromedp.Flag("remote-debugging-port", fmt.Sprintf("%d", 9222)),
-// 		// chromedp.WindowSize(1920, 1080),
-// 		// chromedp.DisableGPU, // supposedly unnecessary
-// 		chromedp.Headless,
-// 		// chromedp.NoSandbox, TODO: Figure out what is better here in headless mode
-// 		chromedp.UserAgent(ua.Firefox88),
-// 		chromedp.NoFirstRun,
-// 		chromedp.NoDefaultBrowserCheck,
-// 		// chromedp.IgnoreCertErrors, // check this when using proxies
-// 		chromedp.WindowSize(1366, 768),
-// 	)
-
-// 	return opts
-// }

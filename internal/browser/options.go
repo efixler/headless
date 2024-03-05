@@ -72,7 +72,9 @@ func getDefaults() config {
 			// chromedp.NoSandbox, TODO: Figure out what is better here in headless mode
 			// chromedp.Flag("disable-software-rasterizer", true),
 			// chromedp.IgnoreCertErrors, // check this when using proxies
+			// chromedp.Flag("mute-audio", true), // included in Headless
 		},
+		windowSize: [2]int{1366, 768},
 	}
 }
 
