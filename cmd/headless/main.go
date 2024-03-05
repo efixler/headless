@@ -9,18 +9,15 @@ import (
 
 	"github.com/efixler/envflags"
 	"github.com/efixler/headless/internal/browser"
-	"github.com/efixler/headless/internal/cmd"
 )
 
 var (
-	flags        = flag.NewFlagSet("headless", flag.ExitOnError)
-	browserFlags *cmd.HeadlessBrowserSpec
-	headless     bool
+	flags     = flag.NewFlagSet("headless", flag.ExitOnError)
+	userAgent *envflags.Value[string]
+	headless  bool
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "Address: %s\n", browserFlags.Address.Get())
-	fmt.Fprintf(os.Stderr, "Port: %d\n", browserFlags.Port.Get())
 	fmt.Fprintf(os.Stderr, "URL: %v\n", flags.Args())
 	if len(flags.Args()) == 0 {
 		flags.Usage()
@@ -32,6 +29,7 @@ func main() {
 		context.Background(),
 		browser.Headless(headless),
 		browser.MaxTabs(1),
+		browser.UserAgentIfNotEmpty(userAgent.Get()),
 	)
 	defer b.Cancel()
 	tab, err := b.AcquireTab()
@@ -50,11 +48,12 @@ func main() {
 
 func init() {
 	envflags.EnvPrefix = "HEADLESS_"
-	browserFlags = cmd.HeadlessBrowserFlags(flags)
 	logLevelFlag := envflags.NewLogLevel("LOG_LEVEL", slog.LevelInfo)
 	logLevelFlag.AddTo(flags, "log-level", "Log level")
 	noHeadlessFlag := envflags.NewBool("NO_HEADLESS", false)
-	noHeadlessFlag.AddTo(flags, "H", "Don't run headless mode")
+	noHeadlessFlag.AddTo(flags, "H", "Show browser window (don't run in headless mode)")
+	userAgent = envflags.NewString("USER_AGENT", "")
+	userAgent.AddTo(flags, "user-agent", "User agent to use (omit for browser default)")
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 	slog.SetLogLoggerLevel(logLevelFlag.Get())

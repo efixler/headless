@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/efixler/headless/ua"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -31,9 +32,11 @@ func Headless(h bool) option {
 	}
 }
 
-func UserAgent(ua string) option {
+func UserAgentIfNotEmpty(ua string) option {
 	return func(b *Chrome) error {
-		b.config.userAgent = ua
+		if ua != "" {
+			b.config.userAgent = ua
+		}
 		return nil
 	}
 }
@@ -81,9 +84,17 @@ func (b *Chrome) applyOptions(opts []option) error {
 			return err
 		}
 	}
+	if b.config.userAgent == "" {
+		b.config.userAgent = ua.Firefox88
+	}
+
 	c.allocatorOptions = append(c.allocatorOptions,
 		chromedp.UserAgent(b.config.userAgent),
 		chromedp.WindowSize(b.config.windowSize[0], b.config.windowSize[1]),
 	)
+	if b.config.userAgent == "" {
+		c.allocatorOptions = append(c.allocatorOptions, chromedp.UserAgent(b.config.userAgent))
+	}
+
 	return nil
 }

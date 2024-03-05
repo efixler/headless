@@ -17,16 +17,23 @@ import (
 )
 
 var (
-	flags     = flag.NewFlagSet("headless-proxy", flag.ExitOnError)
-	server    = &http.Server{}
-	logWriter io.Writer
+	flags         = flag.NewFlagSet("headless-proxy", flag.ExitOnError)
+	maxConcurrent *envflags.Value[int]
+	userAgent     *envflags.Value[string]
+	server        = &http.Server{}
+	logWriter     io.Writer
 )
 
 func main() {
 	slog.Info("Starting headless-proxy server", "addr", server.Addr)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	c := browser.NewChrome(ctx, browser.Headless(true))
+	c := browser.NewChrome(
+		ctx,
+		browser.Headless(true),
+		browser.MaxTabs(maxConcurrent.Get()),
+		browser.UserAgentIfNotEmpty(userAgent.Get()),
+	)
 	var err error
 	if server.Handler, err = proxy.New(c); err != nil {
 		slog.Error("can't initialize proxy", "err", err)
@@ -52,11 +59,15 @@ func init() {
 	port := envflags.NewInt("PORT", 8008)
 	port.AddTo(flags, "port", "Port to listen on")
 	readTimeout := envflags.NewDuration("READ_TIMEOUT", 5*time.Second)
-	readTimeout.AddTo(flags, "read-timeout", "Read timeout")
+	readTimeout.AddTo(flags, "inbound-read-timeout", "Inbound connection read timeout")
 	writeTimeout := envflags.NewDuration("WRITE_TIMEOUT", 30*time.Second)
-	writeTimeout.AddTo(flags, "write-timeout", "Write timeout")
+	writeTimeout.AddTo(flags, "inbound-write-timeout", "Inbound connection write timeout")
 	idleTimeout := envflags.NewDuration("IDLE_TIMEOUT", 120*time.Second)
-	idleTimeout.AddTo(flags, "idle-timeout", "Idle timeout")
+	idleTimeout.AddTo(flags, "inbound-idle-timeout", "Inbound connection keepalive idle timeout")
+	maxConcurrent = envflags.NewInt("MAX_CONCURRENT", 6)
+	maxConcurrent.AddTo(flags, "max-concurrent", "Maximum concurrent connections")
+	userAgent = envflags.NewString("DEFAULT_USER_AGENT", "")
+	userAgent.AddTo(flags, "default-user-agent", "Default user agent string (empty for browser default)")
 	logLevel := envflags.NewLogLevel("LOG_LEVEL", slog.LevelInfo)
 	logLevel.AddTo(flags, "log-level", "Set the log level [debug|error|info|warn]")
 	flags.Parse(os.Args[1:])
