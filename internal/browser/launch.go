@@ -50,6 +50,7 @@ func (b *Chrome) AcquireTab() (headless.Browser, error) {
 	if err := b.sem.Acquire(tabWaitContext, 1); err != nil {
 		return nil, errors.Join(err, ErrMaxTabs)
 	}
+
 	f := func(url string, headers http.Header) (string, error) {
 		defer b.sem.Release(1)
 		return b.HTMLContent(url, headers)
@@ -68,9 +69,9 @@ func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
 	chromedp.ListenTarget(listenCtx, func(ev interface{}) {
 		if res, ok := ev.(*network.EventResponseReceived); ok {
 			// see https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-Response
-			// eventChan <- res
+			// The first event should be a 'Document' type response with the status code of the page load
 			statusCode = int(res.Response.Status)
-			slog.Info("Received response",
+			slog.Info("Received network event from page",
 				"url", res.Response.URL,
 				"type", res.Type,
 				"status", statusCode,
@@ -79,7 +80,7 @@ func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
 			cancelListen()
 		}
 	})
-	slog.Debug("Listening for response", "url", url)
+	slog.Debug("Navigating to:", "url", url)
 
 	err := chromedp.Run(ctx,
 		chromedp.Navigate(url),
@@ -88,7 +89,6 @@ func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
 		chromedp.OuterHTML("html", &html),
 	)
 
-	slog.Debug("Run completed HTML content", "url", url)
 	if err != nil {
 		// see https://github.com/chromedp/chromedp/blob/ebf842c7bc28db77d0bf4d757f5948d769d0866f/nav.go#L26
 		// bad domain = page load error net::ERR_NAME_NOT_RESOLVED

@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	nurl "net/url"
 	"testing"
+
+	"github.com/efixler/headless"
 )
 
 type testProxy struct {
@@ -18,6 +20,10 @@ type testProxy struct {
 type mockBrowser struct {
 	headers http.Header
 	url     string
+}
+
+func (b *mockBrowser) AcquireTab() (headless.Browser, error) {
+	return b, nil
 }
 
 func (b *mockBrowser) HTMLContent(url string, headers http.Header) (string, error) {

@@ -15,7 +15,7 @@ var (
 	}
 )
 
-func New(b headless.Browser) (http.HandlerFunc, error) {
+func New(b headless.TabFactory) (http.HandlerFunc, error) {
 
 	p := func(w http.ResponseWriter, req *http.Request) {
 		slog.Debug("headless proxy request", "remote", req.RemoteAddr, "method", req.Method, "url", req.URL, "host", req.Host, "header", req.Header)
@@ -26,16 +26,14 @@ func New(b headless.Browser) (http.HandlerFunc, error) {
 				headers.Set(headerName, hval)
 			}
 		}
-		var err error
-		if tf, ok := b.(headless.TabFactory); ok {
-			b, err = tf.AcquireTab()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusServiceUnavailable)
-				return
-			}
+
+		target, err := b.AcquireTab()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
 		}
 
-		content, err := b.HTMLContent(req.URL.String(), headers)
+		content, err := target.HTMLContent(req.URL.String(), headers)
 		if err != nil {
 			var httpErr *headless.HTTPError
 			if errors.As(err, &httpErr) {
