@@ -1,0 +1,10 @@
+.gitignore
+.vscode
+.github
+.DS_Store
+*.test
+*.out
+go.work
+coverage.html
+build/
+rest/

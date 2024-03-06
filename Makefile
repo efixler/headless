@@ -1,4 +1,5 @@
 MODULE_NAME := $(shell go list -m)
+DOCKER_IMAGE_NAME := ${shell basename ${MODULE_NAME}}-bookworm-slim
 BUILD_DIR := build
 
 .DEFAULT_GOAL := build
@@ -12,6 +13,10 @@ build: vet ## build the binaries, to the build/ folder (default target)
 clean: ## clean the build directory
 	@echo "Cleaning $(MODULE_NAME)..."
 	@rm -rf $(BUILD_DIR)/*
+
+docker-build: ## build a docker image on the current platform, for local use
+	@echo "Building $(DOCKER_IMAGE_NAME)..." 
+	@docker build -t $(DOCKER_IMAGE_NAME) .
 
 docker-pull-headless-chrome:
 	@echo "Pulling headless chrome..."
