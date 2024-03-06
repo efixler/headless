@@ -32,10 +32,17 @@ func Headless(h bool) option {
 	}
 }
 
-func UserAgentIfNotEmpty(ua string) option {
+func AsFirefox() option {
+	return UserAgentIfNotEmpty(ua.Firefox88)
+}
+
+func UserAgentIfNotEmpty(uas ...string) option {
 	return func(b *Chrome) error {
-		if ua != "" {
-			b.config.userAgent = ua
+		for _, agent := range uas {
+			if agent == "" {
+				continue
+			}
+			b.config.userAgent = agent
 		}
 		return nil
 	}
@@ -86,12 +93,15 @@ func (b *Chrome) applyOptions(opts []option) error {
 			return err
 		}
 	}
-	if b.config.userAgent == "" {
-		b.config.userAgent = ua.Firefox88
+
+	if b.config.userAgent != "" {
+		c.allocatorOptions = append(
+			c.allocatorOptions,
+			chromedp.UserAgent(b.config.userAgent),
+		)
 	}
 
 	c.allocatorOptions = append(c.allocatorOptions,
-		chromedp.UserAgent(b.config.userAgent),
 		chromedp.WindowSize(b.config.windowSize[0], b.config.windowSize[1]),
 	)
 

@@ -9,27 +9,26 @@ import (
 
 	"github.com/efixler/envflags"
 	"github.com/efixler/headless/internal/browser"
+	"github.com/efixler/headless/ua"
 )
 
 var (
 	flags     = flag.NewFlagSet("headless", flag.ExitOnError)
-	userAgent *envflags.Value[string]
+	userAgent *envflags.Value[*ua.Arg]
 	headless  bool
 )
 
 func main() {
-	fmt.Fprintf(os.Stderr, "URL: %v\n", flags.Args())
 	if len(flags.Args()) == 0 {
 		flags.Usage()
 		os.Exit(1)
 	}
 	url := flags.Args()[0]
-
 	b := browser.NewChrome(
 		context.Background(),
 		browser.Headless(headless),
 		browser.MaxTabs(1),
-		browser.UserAgentIfNotEmpty(userAgent.Get()),
+		browser.UserAgentIfNotEmpty(userAgent.Get().String()),
 	)
 	defer b.Cancel()
 	tab, err := b.AcquireTab()
@@ -52,8 +51,9 @@ func init() {
 	logLevelFlag.AddTo(flags, "log-level", "Log level")
 	noHeadlessFlag := envflags.NewBool("NO_HEADLESS", false)
 	noHeadlessFlag.AddTo(flags, "H", "Show browser window (don't run in headless mode)")
-	userAgent = envflags.NewString("USER_AGENT", "")
-	userAgent.AddTo(flags, "user-agent", "User agent to use (omit for browser default)")
+
+	userAgent = envflags.NewText("USER_AGENT", &ua.Arg{})
+	userAgent.AddTo(flags, "user-agent", "User agent to use (omit for browser default, :firefox: for Firefox, :safari: for Safari, or custom string)")
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 	slog.SetLogLoggerLevel(logLevelFlag.Get())

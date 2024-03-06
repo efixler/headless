@@ -14,12 +14,13 @@ import (
 	"github.com/efixler/headless/graceful"
 	"github.com/efixler/headless/internal/browser"
 	"github.com/efixler/headless/internal/proxy"
+	"github.com/efixler/headless/ua"
 )
 
 var (
 	flags         = flag.NewFlagSet("headless-proxy", flag.ExitOnError)
 	maxConcurrent *envflags.Value[int]
-	userAgent     *envflags.Value[string]
+	userAgent     *envflags.Value[*ua.Arg]
 	server        = &http.Server{}
 	logWriter     io.Writer
 )
@@ -32,7 +33,7 @@ func main() {
 		ctx,
 		browser.Headless(true),
 		browser.MaxTabs(maxConcurrent.Get()),
-		browser.UserAgentIfNotEmpty(userAgent.Get()),
+		browser.UserAgentIfNotEmpty(userAgent.Get().String()),
 	)
 	var err error
 	if server.Handler, err = proxy.New(c); err != nil {
@@ -66,8 +67,9 @@ func init() {
 	idleTimeout.AddTo(flags, "inbound-idle-timeout", "Inbound connection keepalive idle timeout")
 	maxConcurrent = envflags.NewInt("MAX_CONCURRENT", 6)
 	maxConcurrent.AddTo(flags, "max-concurrent", "Maximum concurrent connections")
-	userAgent = envflags.NewString("DEFAULT_USER_AGENT", "")
-	userAgent.AddTo(flags, "default-user-agent", "Default user agent string (empty for browser default)")
+
+	userAgent = envflags.NewText("DEFAULT_USER_AGENT", &ua.Arg{})
+	userAgent.AddTo(flags, "default-user-agent", "Default user agent string (omit for browser default, :firefox: for Firefox, :safari: for Safari, or custom string)")
 	logLevel := envflags.NewLogLevel("LOG_LEVEL", slog.LevelInfo)
 	logLevel.AddTo(flags, "log-level", "Set the log level [debug|error|info|warn]")
 	flags.Parse(os.Args[1:])
