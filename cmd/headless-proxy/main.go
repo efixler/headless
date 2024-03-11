@@ -21,6 +21,7 @@ var (
 	flags         = flag.NewFlagSet("headless-proxy", flag.ExitOnError)
 	maxConcurrent *envflags.Value[int]
 	userAgent     *envflags.Value[*ua.Arg]
+	proxyFlag     = flags.Bool("proxy", false, "Run as a proxy server")
 	server        = &http.Server{}
 	logWriter     io.Writer
 )
@@ -36,9 +37,16 @@ func main() {
 		browser.UserAgentIfNotEmpty(userAgent.Get().String()),
 	)
 	var err error
-	if server.Handler, err = proxy.New(c); err != nil {
-		slog.Error("can't initialize proxy", "err", err)
-		os.Exit(1)
+	if *proxyFlag {
+		if server.Handler, err = proxy.HTTPProxy(c); err != nil {
+			slog.Error("can't initialize headless proxy", "err", err)
+			os.Exit(1)
+		}
+	} else {
+		if server.Handler, err = proxy.Service(c); err != nil {
+			slog.Error("can't initialize headless service", "err", err)
+			os.Exit(1)
+		}
 	}
 
 	go func() {

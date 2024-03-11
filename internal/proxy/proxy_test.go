@@ -1,13 +1,17 @@
 package proxy
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	nurl "net/url"
+	"strings"
 	"testing"
 
 	"github.com/efixler/headless"
+	"github.com/efixler/headless/request"
 )
 
 type testProxy struct {
@@ -41,7 +45,7 @@ func newTestProxy(t *testing.T) *testProxy {
 	})
 	tp.targetServer = httptest.NewServer(targetHandler)
 	tp.mockBrowser = &mockBrowser{}
-	proxyHandler, err := New(tp.mockBrowser)
+	proxyHandler, err := New(tp.mockBrowser, AsProxy)
 	if err != nil {
 		t.Fatalf("can't initialize proxy handler %v", err)
 	}
@@ -83,5 +87,93 @@ func TestBasicProxyRequest(t *testing.T) {
 		if tp.mockBrowser.url != test.url {
 			t.Errorf("[%s] - expected url %s, got %s", test.name, test.url, tp.mockBrowser.url)
 		}
+	}
+}
+
+func TestProxyAsPostHandler(t *testing.T) {
+	tests := []struct {
+		name          string
+		url           string
+		header        map[string]string
+		expectStatus  int
+		expectHeaders map[string]string
+	}{
+		{
+			"basic",
+			"http://www.foobar.com/today/index.html",
+			map[string]string{"User-Agent": "fooagent", "Accept": "text/html"},
+			200,
+			map[string]string{"User-Agent": "fooagent"},
+		},
+		{
+			"nil headers",
+			"http://www.foobar.com/today/index.html",
+			nil,
+			200,
+			map[string]string{},
+		},
+	}
+	mockBrowser := mockBrowser{}
+	headlessHandler, err := New(&mockBrowser, AsPostHandler)
+	if err != nil {
+		t.Fatalf("can't initialize proxy handler %v", err)
+	}
+	for _, test := range tests {
+		payload := &request.Payload{URL: test.url, Headers: test.header}
+		payloadJSON, err := json.Marshal(payload)
+		body := bytes.NewReader(payloadJSON)
+		if err != nil {
+			t.Fatalf("[%s] - unexpected error marshaling json %v", test.name, err)
+		}
+
+		req := httptest.NewRequest("POST", "/", body)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		headlessHandler(w, req)
+		resp := w.Result()
+		if resp.StatusCode != test.expectStatus {
+			t.Errorf("[%s] - expected status %d, got %d", test.name, test.expectStatus, w.Code)
+		}
+		for k, v := range test.expectHeaders {
+			if mockBrowser.headers.Get(k) != v {
+				t.Errorf("[%s] - expected header %s: %v, got %v", test.name, k, v, mockBrowser.headers.Get(k))
+			}
+		}
+	}
+}
+
+func TestPayloadBadContentType(t *testing.T) {
+	mockBrowser := mockBrowser{}
+	headlessHandler, err := New(&mockBrowser, AsPostHandler)
+	if err != nil {
+		t.Fatalf("can't initialize proxy handler %v", err)
+	}
+	payload := &request.Payload{URL: "foo", Headers: map[string]string{"Content-Type": "application/json"}}
+	payloadJSON, _ := json.Marshal(payload)
+	body := bytes.NewReader(payloadJSON)
+	req := httptest.NewRequest("POST", "/", body)
+	req.Header.Set("Content-Type", "text/plain")
+	w := httptest.NewRecorder()
+	headlessHandler(w, req)
+	resp := w.Result()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+func TestPayloadDisallowedFields(t *testing.T) {
+	mockBrowser := mockBrowser{}
+	headlessHandler, err := New(&mockBrowser, AsPostHandler)
+	if err != nil {
+		t.Fatalf("can't initialize proxy handler %v", err)
+	}
+	payloadJSON := `{"url": "foo", "headers": {"Content-Type": "application/json"}, "foo": "bar"}`
+	body := strings.NewReader(payloadJSON)
+	req := httptest.NewRequest("POST", "/", body)
+	w := httptest.NewRecorder()
+	headlessHandler(w, req)
+	resp := w.Result()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
 	}
 }
