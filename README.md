@@ -1,5 +1,9 @@
 # headless
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/efixler/headless.svg)](https://pkg.go.dev/github.com/efixler/headless)
+[![Go Report Card](https://goreportcard.com/badge/github.com/efixler/headless)](https://goreportcard.com/report/github.com/efixler/headless)
+[![License MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://github.com/efixler/headless?tab=MPL-2.0-1-ov-file)
+
 `headless` scrapes html for a target url using a headless Chrome browser. The included `headless` and `headless-proxy` apps provide headless scraping functionality from the shell and as an HTTP proxy server.
 
 ## Table of Contents
