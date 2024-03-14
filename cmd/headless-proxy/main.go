@@ -14,7 +14,7 @@ import (
 	"github.com/efixler/headless/graceful"
 	"github.com/efixler/headless/internal/browser"
 	"github.com/efixler/headless/internal/proxy"
-	"github.com/efixler/headless/ua"
+	"github.com/efixler/headless/internal/ua"
 )
 
 var (

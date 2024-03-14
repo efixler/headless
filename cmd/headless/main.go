@@ -9,7 +9,7 @@ import (
 
 	"github.com/efixler/envflags"
 	"github.com/efixler/headless/internal/browser"
-	"github.com/efixler/headless/ua"
+	"github.com/efixler/headless/internal/ua"
 )
 
 var (

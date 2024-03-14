@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	"github.com/efixler/headless/ua"
+	"github.com/efixler/headless/internal/ua"
 	"golang.org/x/sync/semaphore"
 )
 
