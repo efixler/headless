@@ -7,7 +7,7 @@ import (
 )
 
 type Browser interface {
-	HTMLContent(url string, headers http.Header) (string, error)
+	Get(url string, headers http.Header) (*http.Response, error)
 }
 
 type TabFactory interface {

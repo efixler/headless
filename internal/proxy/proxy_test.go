@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	nurl "net/url"
@@ -30,11 +31,22 @@ func (b *mockBrowser) AcquireTab() (headless.Browser, error) {
 	return b, nil
 }
 
-func (b *mockBrowser) HTMLContent(url string, headers http.Header) (string, error) {
+func (b *mockBrowser) Get(url string, headers http.Header) (*http.Response, error) {
 	b.url = url
 	b.headers = headers
+	resp := &http.Response{
+		StatusCode: 200,
+		Header:     http.Header{},
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+	}
+
 	html := fmt.Sprintf(`<html><head><title>%s</title></head><body>%s</body></html>`, url, url)
-	return html, nil
+	body := io.NopCloser(strings.NewReader(html))
+	resp.Body = body
+	resp.ContentLength = int64(len(html))
+	return resp, nil
 }
 
 func newTestProxy(t *testing.T) *testProxy {

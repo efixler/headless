@@ -37,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	content, err := tab.HTMLContent(url, nil)
+	content, err := tab.Get(url, nil)
 	if err != nil {
 		slog.Error("Error getting HTML content", "url", url, "err", err)
 		os.Exit(1)

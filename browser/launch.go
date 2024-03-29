@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/network"
@@ -35,9 +37,9 @@ type Chrome struct {
 	config     *config
 }
 
-type browserFunc func(url string, headers http.Header) (string, error)
+type browserFunc func(url string, headers http.Header) (*http.Response, error)
 
-func (f browserFunc) HTMLContent(url string, headers http.Header) (string, error) {
+func (f browserFunc) Get(url string, headers http.Header) (*http.Response, error) {
 	return f(url, headers)
 }
 
@@ -51,39 +53,59 @@ func (b *Chrome) AcquireTab() (headless.Browser, error) {
 		return nil, errors.Join(err, ErrMaxTabs)
 	}
 
-	f := func(url string, headers http.Header) (string, error) {
+	f := func(url string, headers http.Header) (*http.Response, error) {
 		defer b.sem.Release(1)
-		return b.HTMLContent(url, headers)
+		return b.Get(url, headers)
 	}
 	return browserFunc(f), nil
 }
 
-func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
+func (b *Chrome) Get(url string, headers http.Header) (*http.Response, error) {
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
 	ctx, cancel := chromedp.NewContext(b.ctx)
 	defer cancel()
 
 	var html string
-	var statusCode int
+	response := &http.Response{
+		Header: http.Header{},
+	}
 
 	listenCtx, cancelListen := context.WithCancel(ctx)
 	chromedp.ListenTarget(listenCtx, func(ev interface{}) {
 		if res, ok := ev.(*network.EventResponseReceived); ok {
 			// see https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-Response
-			// The first event should be a 'Document' type response with the status code of the page load
-			statusCode = int(res.Response.Status)
-			slog.Info("Received network event from page",
+			// The first event should be a 'Document' type response with the status of the page load
+			response.StatusCode = int(res.Response.Status)
+			response.Status = fmt.Sprintf("%d %s", response.StatusCode, res.Response.StatusText)
+			response.Proto = strings.ToUpper(res.Response.Protocol)
+			response.ProtoMajor, response.ProtoMinor = extractHTTPVersion(res.Response.Protocol)
+			slog.Debug("Received network event from page",
 				"url", res.Response.URL,
 				"type", res.Type,
-				"status", statusCode,
+				"status", response.Status,
 				"statusText", res.Response.StatusText,
 			)
+			headers := res.Response.Headers
+			for k, v := range headers {
+				switch http.CanonicalHeaderKey(k) {
+				case "Content-Length":
+					continue
+				case "Content-Encoding":
+					continue
+				}
+				response.Header.Add(k, fmt.Sprintf("%v", v))
+				slog.Debug("Header", "key", k, "value", v)
+			}
 			cancelListen()
 		}
 	})
 	slog.Debug("Navigating to:", "url", url)
-
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
+	// TODO: add passHeaders to request
+	err = chromedp.Run(ctx,
+		chromedp.Navigate(request.URL.String()),
 		chromedp.Sleep(1*time.Second),
 		chromedp.WaitReady("body"),
 		chromedp.OuterHTML("html", &html),
@@ -94,6 +116,13 @@ func (b *Chrome) HTMLContent(url string, headers http.Header) (string, error) {
 		// bad domain = page load error net::ERR_NAME_NOT_RESOLVED
 		slog.Error("Error getting HTML content", "url", url, "err", err)
 	}
+	response.ContentLength = int64(len(html))
+	response.Body = io.NopCloser(strings.NewReader(html))
+	response.Request = request
+	return response, err
+}
 
-	return html, err
+func extractHTTPVersion(protocol string) (major, minor int) {
+	fmt.Sscanf(protocol, "HTTP/%d.%d", &major, &minor)
+	return
 }
