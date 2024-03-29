@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/efixler/envflags"
+	"github.com/efixler/headless/browser"
 	"github.com/efixler/headless/graceful"
-	"github.com/efixler/headless/internal/browser"
 	"github.com/efixler/headless/internal/proxy"
-	"github.com/efixler/headless/internal/ua"
+	"github.com/efixler/headless/ua"
 )
 
 var (

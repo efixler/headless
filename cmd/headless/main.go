@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/efixler/envflags"
-	"github.com/efixler/headless/internal/browser"
-	"github.com/efixler/headless/internal/ua"
+	"github.com/efixler/headless/browser"
+	"github.com/efixler/headless/ua"
 )
 
 var (

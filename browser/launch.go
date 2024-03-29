@@ -20,6 +20,13 @@ var (
 	ErrMaxTabsNotSet = fmt.Errorf("maximum number of tabs not set")
 )
 
+func NewChrome(ctx context.Context, options ...option) *Chrome {
+	b := &Chrome{tabTimeout: 5 * time.Second}
+	b.applyOptions(options)
+	b.ctx, b.Cancel = chromedp.NewExecAllocator(ctx, b.config.allocatorOptions...)
+	return b
+}
+
 type Chrome struct {
 	ctx        context.Context
 	Cancel     context.CancelFunc
@@ -32,13 +39,6 @@ type browserFunc func(url string, headers http.Header) (string, error)
 
 func (f browserFunc) HTMLContent(url string, headers http.Header) (string, error) {
 	return f(url, headers)
-}
-
-func NewChrome(ctx context.Context, options ...option) *Chrome {
-	b := &Chrome{tabTimeout: 5 * time.Second}
-	b.applyOptions(options)
-	b.ctx, b.Cancel = chromedp.NewExecAllocator(ctx, b.config.allocatorOptions...)
-	return b
 }
 
 func (b *Chrome) AcquireTab() (headless.Browser, error) {

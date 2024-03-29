@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/efixler/headless/internal/ua"
+	"github.com/efixler/headless/ua"
 )
 
 func TestUserAgentIfNotEmpty(t *testing.T) {
