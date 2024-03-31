@@ -12,23 +12,24 @@ import (
 
 // After a SIGINT, SIGTERM, or os.Interrupt, shut down s, wait a bit for
 // requests to clear, then call the passed cancel function.
+// This will let the requests finish before shutting down any other open
+// resources with the passed CancelFunc.
 // This function will block until server shutdown is complete
 func WaitForShutdown(s *http.Server, cf context.CancelFunc) {
-	WaitForKill()
-	<-ShutdownServer(s, cf)
+	waitForKill()
+	<-shutdownServer(s, cf)
 }
 
-func WaitForKill() {
+func waitForKill() {
 	kill := make(chan os.Signal, 1)
 	signal.Notify(kill, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-kill
 }
 
-// Shutdown the server and then progate the shutdown to a cancel function.
-// This will let the requests finish before shutting down any other resources
-// with the passed CancelFunc.
+// Shutdown the server and then propagate the shutdown to a cancel function.
+
 // Caller should block on the returned channel.
-func ShutdownServer(s *http.Server, cf context.CancelFunc) chan bool {
+func shutdownServer(s *http.Server, cf context.CancelFunc) chan bool {
 	slog.Info("server shutting down")
 	wchan := make(chan bool)
 	// a large request set can take a while to finish,
