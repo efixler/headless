@@ -1,11 +1,14 @@
 module github.com/efixler/headless
 
-go 1.22
+go 1.22.0
+
+toolchain go1.22.1
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240226204813-532e667d868f
 	github.com/chromedp/chromedp v0.9.5
 	github.com/efixler/envflags v0.0.0-20240216173636-8ba3a3ae2ac0
+	github.com/efixler/webutil v0.0.0-20240331165905-2fd0e608a9e9
 	golang.org/x/sync v0.6.0
 )
 
