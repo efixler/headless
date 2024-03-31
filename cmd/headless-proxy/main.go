@@ -30,13 +30,16 @@ func main() {
 	slog.Info("Starting headless-proxy server", "addr", server.Addr)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	c := browser.NewChrome(
+	c, err := browser.NewChrome(
 		ctx,
 		browser.Headless(true),
 		browser.MaxTabs(maxConcurrent.Get()),
 		browser.UserAgentIfNotEmpty(userAgent.Get().String()),
 	)
-	var err error
+	if err != nil {
+		slog.Error("can't initialize headless browser", "err", err)
+		os.Exit(1)
+	}
 	if *proxyFlag {
 		if server.Handler, err = proxy.HTTPProxy(c); err != nil {
 			slog.Error("can't initialize headless proxy", "err", err)

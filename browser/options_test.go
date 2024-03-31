@@ -8,7 +8,10 @@ import (
 )
 
 func TestUserAgentIfNotEmpty(t *testing.T) {
-	c := NewChrome(context.Background())
+	c, err := NewChrome(context.Background())
+	if err != nil {
+		t.Fatalf("NewChrome failed: %v", err)
+	}
 	if c.config.userAgent != "" {
 		t.Errorf("UserAgent option, expected empty got %s", c.config.userAgent)
 	}

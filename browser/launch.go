@@ -22,11 +22,13 @@ var (
 	ErrMaxTabsNotSet = fmt.Errorf("maximum number of tabs not set")
 )
 
-func NewChrome(ctx context.Context, options ...option) *Chrome {
-	b := &Chrome{tabTimeout: 5 * time.Second}
-	b.applyOptions(options)
+func NewChrome(ctx context.Context, options ...ChromeOption) (*Chrome, error) {
+	b := &Chrome{tabTimeout: 10 * time.Second}
+	if err := b.applyOptions(options); err != nil {
+		return nil, err
+	}
 	b.ctx, b.Cancel = chromedp.NewExecAllocator(ctx, b.config.allocatorOptions...)
-	return b
+	return b, nil
 }
 
 type Chrome struct {

@@ -14,16 +14,16 @@ type config struct {
 	windowSize       [2]int
 }
 
-type option func(*Chrome) error
+type ChromeOption func(*Chrome) error
 
-func CDPOptions(cdps ...chromedp.ExecAllocatorOption) option {
+func CDPOptions(cdps ...chromedp.ExecAllocatorOption) ChromeOption {
 	return func(b *Chrome) error {
 		b.config.allocatorOptions = append(b.config.allocatorOptions, cdps...)
 		return nil
 	}
 }
 
-func Headless(h bool) option {
+func Headless(h bool) ChromeOption {
 	return func(b *Chrome) error {
 		if h {
 			b.config.allocatorOptions = append(b.config.allocatorOptions, chromedp.Headless)
@@ -32,11 +32,11 @@ func Headless(h bool) option {
 	}
 }
 
-func AsFirefox() option {
+func AsFirefox() ChromeOption {
 	return UserAgentIfNotEmpty(ua.Firefox88)
 }
 
-func UserAgentIfNotEmpty(uas ...string) option {
+func UserAgentIfNotEmpty(uas ...string) ChromeOption {
 	return func(b *Chrome) error {
 		for _, agent := range uas {
 			if agent == "" {
@@ -48,21 +48,21 @@ func UserAgentIfNotEmpty(uas ...string) option {
 	}
 }
 
-func MaxTabs(n int) option {
+func MaxTabs(n int) ChromeOption {
 	return func(b *Chrome) error {
 		b.sem = semaphore.NewWeighted(int64(n))
 		return nil
 	}
 }
 
-func TabAcquireTimeout(d time.Duration) option {
+func TabAcquireTimeout(d time.Duration) ChromeOption {
 	return func(b *Chrome) error {
 		b.tabTimeout = d
 		return nil
 	}
 }
 
-func WindowSize(w, h int) option {
+func WindowSize(w, h int) ChromeOption {
 	return func(b *Chrome) error {
 		b.config.windowSize = [2]int{w, h}
 		return nil
@@ -85,7 +85,7 @@ func getDefaults() config {
 	}
 }
 
-func (b *Chrome) applyOptions(opts []option) error {
+func (b *Chrome) applyOptions(opts []ChromeOption) error {
 	c := getDefaults()
 	b.config = &c
 	for _, opt := range opts {

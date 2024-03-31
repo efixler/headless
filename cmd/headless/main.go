@@ -25,12 +25,16 @@ func main() {
 		os.Exit(1)
 	}
 	url := flags.Args()[0]
-	b := browser.NewChrome(
+	b, err := browser.NewChrome(
 		context.Background(),
 		browser.Headless(headless),
 		browser.MaxTabs(1),
 		browser.UserAgentIfNotEmpty(userAgent.Get().String()),
 	)
+	if err != nil {
+		slog.Error("can't initialize headless browser", "err", err)
+		os.Exit(1)
+	}
 	defer b.Cancel()
 	tab, err := b.AcquireTab()
 	if err != nil {
