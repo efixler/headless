@@ -34,7 +34,22 @@ func TestExtractProtocolVersion(t *testing.T) {
 			expectMinor: 1,
 		},
 		{
+			p:           "http/1.1",
+			expectMajor: 1,
+			expectMinor: 1,
+		},
+		{
 			p:           "HTTP/1",
+			expectMajor: 1,
+			expectMinor: 0,
+		},
+		{
+			p:           "H2",
+			expectMajor: 2,
+			expectMinor: 0,
+		},
+		{
+			p:           "",
 			expectMajor: 1,
 			expectMinor: 0,
 		},

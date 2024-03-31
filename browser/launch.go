@@ -87,6 +87,7 @@ func (b *Chrome) Get(url string, headers http.Header) (*http.Response, error) {
 				"type", res.Type,
 				"status", response.Status,
 				"statusText", res.Response.StatusText,
+				"protocol", res.Response.Protocol,
 			)
 			headers := res.Response.Headers
 			for k, v := range headers {
@@ -123,6 +124,14 @@ func (b *Chrome) Get(url string, headers http.Header) (*http.Response, error) {
 }
 
 func extractHTTPVersion(protocol string) (major, minor int) {
-	fmt.Sscanf(protocol, "HTTP/%d.%d", &major, &minor)
+	major = 1
+	protocol = strings.ToUpper(protocol)
+	n, _ := fmt.Sscanf(protocol, "HTTP/%d.%d", &major, &minor)
+	if (n > 0) || (len(protocol) < 2) {
+		return
+	}
+	if protocol[0:2] == "H2" {
+		major = 2
+	}
 	return
 }
