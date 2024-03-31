@@ -3,6 +3,8 @@ package proxy
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/textproto"
@@ -54,7 +56,7 @@ func New(b headless.TabFactory, mode handlerMode) (http.HandlerFunc, error) {
 			passHeaders.Set(k, v)
 		}
 
-		content, err := target.HTMLContent(payload.URL, passHeaders)
+		resp, err := target.Get(payload.URL, passHeaders)
 		if err != nil {
 			var httpErr *headless.HTTPError
 			if errors.As(err, &httpErr) {
@@ -64,7 +66,22 @@ func New(b headless.TabFactory, mode handlerMode) (http.HandlerFunc, error) {
 			}
 			return
 		}
-		w.Write([]byte(content))
+		for k, v := range resp.Header {
+			w.Header()[k] = v
+		}
+		w.Header().Set("Content-Length", fmt.Sprint(resp.ContentLength))
+		w.WriteHeader(resp.StatusCode)
+		buf := make([]byte, 8192)
+		for {
+			c, err := resp.Body.Read(buf)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				slog.Error("Error sending response body content", "err", err)
+				break
+			}
+			w.Write(buf[:c])
+		}
 	}
 	return p, nil
 }

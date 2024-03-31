@@ -48,7 +48,7 @@ func TestAcquireTab(t *testing.T) {
 	}
 	go func() {
 		time.Sleep(3 * time.Second)
-		tab.HTMLContent("https://www.mozilla.org/en-US/contact/", nil)
+		tab.Get("https://www.mozilla.org/en-US/contact/", nil)
 		t.Log("First tab done")
 	}()
 	_, err = b.AcquireTab()

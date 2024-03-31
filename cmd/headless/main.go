@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 
@@ -37,12 +38,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	content, err := tab.HTMLContent(url, nil)
+	resp, err := tab.Get(url, nil)
 	if err != nil {
 		slog.Error("Error getting HTML content", "url", url, "err", err)
 		os.Exit(1)
 	}
-	fmt.Println(content)
+	content, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(content))
 }
 
 func init() {
