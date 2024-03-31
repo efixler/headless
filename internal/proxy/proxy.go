@@ -71,8 +71,17 @@ func New(b headless.TabFactory, mode handlerMode) (http.HandlerFunc, error) {
 		}
 		w.Header().Set("Content-Length", fmt.Sprint(resp.ContentLength))
 		w.WriteHeader(resp.StatusCode)
-		content, _ := io.ReadAll(resp.Body)
-		w.Write(content)
+		buf := make([]byte, 8192)
+		for {
+			c, err := resp.Body.Read(buf)
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				slog.Error("Error sending response body content", "err", err)
+				break
+			}
+			w.Write(buf[:c])
+		}
 	}
 	return p, nil
 }
