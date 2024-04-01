@@ -10,8 +10,11 @@ import (
 func TestMustSetMaxTabsForTabs(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	b := NewChrome(ctx, Headless(true))
-	_, err := b.AcquireTab()
+	b, err := NewChrome(ctx, Headless(true))
+	if err != nil {
+		t.Fatalf("NewChrome failed: %v", err)
+	}
+	_, err = b.AcquireTab()
 	if err == nil {
 		t.Fatal("Expected error")
 	}
@@ -23,8 +26,11 @@ func TestMustSetMaxTabsForTabs(t *testing.T) {
 func TestErrorWhenTooManyTabs(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	b := NewChrome(ctx, Headless(true), MaxTabs(1), TabAcquireTimeout(1*time.Second))
-	_, err := b.AcquireTab()
+	b, err := NewChrome(ctx, Headless(true), MaxTabs(1), TabAcquireTimeout(1*time.Second))
+	if err != nil {
+		t.Fatalf("NewChrome failed: %v", err)
+	}
+	_, err = b.AcquireTab()
 	if err != nil {
 		t.Fatalf("Unexpected error acquiring tab: %v", err)
 	}
@@ -41,7 +47,10 @@ func TestErrorWhenTooManyTabs(t *testing.T) {
 func TestAcquireTab(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	b := NewChrome(ctx, Headless(true), MaxTabs(1), TabAcquireTimeout(10*time.Second))
+	b, err := NewChrome(ctx, Headless(true), MaxTabs(1), TabAcquireTimeout(10*time.Second))
+	if err != nil {
+		t.Fatalf("NewChrome failed: %v", err)
+	}
 	tab, err := b.AcquireTab()
 	if err != nil {
 		t.Fatalf("Unexpected error acquiring tab: %v", err)

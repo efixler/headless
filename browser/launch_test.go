@@ -6,7 +6,10 @@ import (
 )
 
 func TestGetErrorsOnInvalidURL(t *testing.T) {
-	c := NewChrome(context.Background(), MaxTabs(1))
+	c, err := NewChrome(context.Background(), MaxTabs(1))
+	if err != nil {
+		t.Fatalf("NewChrome failed: %v", err)
+	}
 	b, err := c.AcquireTab()
 	if err != nil {
 		t.Fatalf("AcquireTab failed: %v", err)
