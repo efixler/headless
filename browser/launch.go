@@ -72,7 +72,8 @@ func (b *Chrome) Get(url string, headers http.Header) (*http.Response, error) {
 
 	var html string
 	response := &http.Response{
-		Header: http.Header{},
+		Header:  http.Header{},
+		Request: request,
 	}
 
 	listenCtx, cancelListen := context.WithCancel(ctx)
@@ -117,11 +118,13 @@ func (b *Chrome) Get(url string, headers http.Header) (*http.Response, error) {
 	if err != nil {
 		// see https://github.com/chromedp/chromedp/blob/ebf842c7bc28db77d0bf4d757f5948d769d0866f/nav.go#L26
 		// bad domain = page load error net::ERR_NAME_NOT_RESOLVED
+		response.StatusCode = http.StatusBadGateway
+		response.Status = fmt.Sprintf("%d %s", response.StatusCode, err.Error())
 		slog.Error("Error getting HTML content", "url", url, "err", err)
+
 	}
 	response.ContentLength = int64(len(html))
 	response.Body = io.NopCloser(strings.NewReader(html))
-	response.Request = request
 	return response, err
 }
 
