@@ -27,6 +27,7 @@ func main() {
 	url := flags.Args()[0]
 	b, err := browser.NewChrome(
 		context.Background(),
+		browser.Firefox(browser.FirefoxMacPath),
 		browser.Headless(headless),
 		browser.MaxTabs(1),
 		browser.UserAgentIfNotEmpty(userAgent.Get().String()),

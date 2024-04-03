@@ -23,6 +23,24 @@ func CDPOptions(cdps ...chromedp.ExecAllocatorOption) ChromeOption {
 	}
 }
 
+const (
+	FirefoxMacPath = "/Applications/Firefox.app/Contents/MacOS/firefox"
+)
+
+// Important: If using FF, pass this option first as it will clear all prior settings.
+// Firefox only supports a limited subset of CDP options. Headless and WindowSize are supported.
+func Firefox(path string) ChromeOption {
+	return func(b *Chrome) error {
+		b.config.allocatorOptions = []chromedp.ExecAllocatorOption{
+			chromedp.ExecPath(path),
+			chromedp.UserDataDir(""),
+			// chromedp.Flag("start-debugger-server", "6000"),
+			// chromedp.Flag("new-instance", true),
+		}
+		return nil
+	}
+}
+
 func Headless(h bool) ChromeOption {
 	return func(b *Chrome) error {
 		if h {
